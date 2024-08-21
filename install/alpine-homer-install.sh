@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
+
 color
 verb_ip6
 catch_errors
@@ -14,9 +15,8 @@ msg_ok "Installed Dependencies"
 msg_info "Installing Homer"
 mkdir -p /opt/homer
 cd /opt/homer
-HOMER_VERSION=$(curl -s https://api.github.com/repos/bastienwirtz/homer/releases/latest | grep "tag_name" | cut -d'"' -f4)
-wget -q https://github.com/bastienwirtz/homer/releases/download/${HOMER_VERSION}/homer.zip
-unzip -q homer.zip
+wget -q https://github.com/bastienwirtz/homer/releases/latest/download/homer.zip
+unzip homer.zip &>/dev/null
 rm homer.zip
 cp assets/config.yml.dist assets/config.yml
 msg_ok "Installed Homer"

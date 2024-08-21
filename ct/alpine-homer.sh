@@ -17,9 +17,9 @@ EOF
 header_info
 echo -e "Loading..."
 APP="Alpine-Homer"
-var_disk="2"
+var_disk="1"
 var_cpu="1"
-var_ram="512"
+var_ram="256"
 var_os="alpine"
 var_version="3.19"
 variables
@@ -51,26 +51,42 @@ function default_settings() {
 }
 
 function update_script() {
-  if ! apk -e info newt >/dev/null 2>&1; then
-    apk add -q newt
+  header_info
+  if [[ ! -d /opt/homer ]]; then
+    msg_error "No ${APP} Installation Found!"
+    exit
   fi
+  msg_info "Stopping ${APP}"
+  systemctl stop homer
+  msg_ok "Stopped ${APP}"
 
-  while true; do
-    CHOICE=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "SUPPORT" --menu "Select option" 11 58 1 \
-      "1" "Check for Homer Updates" 3>&1 1>&2 2>&3)
-    exit_status=$?
-    if [ $exit_status == 1 ]; then
-      clear
-      exit-script
-    fi
-    header_info
-    case $CHOICE in
-    1)
-      apk update && apk upgrade
-      exit
-      ;;
-    esac
-  done
+  msg_info "Backing up assets directory"
+  cd ~
+  mkdir -p assets-backup
+  cp -R /opt/homer/assets/. assets-backup
+  msg_ok "Backed up assets directory"
+
+  msg_info "Updating ${APP}"
+  rm -rf /opt/homer/*
+  cd /opt/homer
+  wget -q https://github.com/bastienwirtz/homer/releases/latest/download/homer.zip
+  unzip homer.zip &>/dev/null
+  msg_ok "Updated ${APP}"
+
+  msg_info "Restoring assets directory"
+  cd ~
+  cp -Rf assets-backup/. /opt/homer/assets/
+  msg_ok "Restored assets directory"
+
+  msg_info "Cleaning"
+  rm -rf assets-backup /opt/homer/homer.zip
+  msg_ok "Cleaned"
+
+  msg_info "Starting ${APP}"
+  systemctl start homer
+  msg_ok "Started ${APP}"
+  msg_ok "Updated Successfully"
+  exit
 }
 
 start
@@ -79,4 +95,4 @@ description
 
 msg_ok "Completed Successfully!\n"
 echo -e "${APP} should be reachable by going to the following URL.
-${BL}http://${IP}:8080${CL} \n"
+${BL}http://${IP}:8010${CL} \n"
